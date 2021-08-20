@@ -5,6 +5,9 @@ grid = {
   {1 , 1 , 8 , 0 , 10}
 }
 
+meta_grid = {}
+
+
 male = {
   {1, 2},
   {3, 1}
@@ -15,6 +18,24 @@ female = {
   {4, 3},
   {2, 5}
 }
+
+function init_meta_grid()
+  for i, row in ipairs(grid) do
+    table.insert(meta_grid, {})
+    for k, _ in ipairs(row) do
+      table.insert(meta_grid[i], {i, k})
+      ---meta_grid[i][k] = {i, k}
+    end
+  end
+end
+
+function to_meta(point)
+  return meta_grid[point[1]][point[2]]
+end
+
+
+init_meta_grid()
+  
 
 function print_grid(grid, male, female) 
   for _,row in ipairs(grid) do
@@ -46,17 +67,19 @@ function lowest_point(open_points, point_map)
 end
 
 function shortest_path(start, destination, grid) 
-  
+  _start = to_meta(start)
+  _destination = to_meta(destination)
   closed_points = { }
-  open_points = { start }
+  open_points = { _start }
   point_map = { 
-    [start] = {g = 0, h = 0, f = 100, parent = {}}
+    [_start] = {g = 0, h = 0, f = 100, parent = {}}
   }
   
   while (#open_points > 0) do
     i, point = lowest_point(open_points, point_map)
     
-    if (point == destination) then
+    if (point == _destination) then
+      print("Arrived")
       return "da fare"
     end
     
@@ -64,22 +87,22 @@ function shortest_path(start, destination, grid)
     table.insert(closed_points, point)
     
     for _,neighbour in ipairs(neighbour_points(point, grid)) do
-      
-      if (not contains_point(closed_points, neighbour)) then 
+      _neighbour = to_meta(neighbour)
+      if (not contains_point(closed_points, _neighbour)) then 
         
-        t_g = point_map[point]["g"] + distance_between(point, neighbour, grid)
+        t_g = point_map[point]["g"] + distance_between(point, _neighbour, grid)
 
-        if (not contains_point(open_points, neighbour)) then
-          table.insert(open_points, neighbour)
+        if (not contains_point(open_points, _neighbour)) then
+          table.insert(open_points, _neighbour)
           better = true
-        elseif (t_g < point_map[neighbour]["g"]) then
+        elseif (t_g < point_map[_neighbour]["g"]) then
           better = true
         else
           better = false
         end
         
         if (better) then
-          point_map[neighbour] = {g = t_g, h = 0, f = t_g + 0, parent = point}
+          point_map[_neighbour] = {g = t_g, h = 0, f = t_g + 0, parent = point}
         end
         
       end
@@ -103,7 +126,7 @@ end
 
 function neighbour_points(point, grid)
   res = {}
-  offsets = {{0,-1}, {1,0}, {0,1},{-1,0}}
+  offsets = {{0,-1}, {1,0}, {0,1}, {-1,0}}
   local x = point[1]
   local y = point[2]
   for _, offset in ipairs(offsets) do
