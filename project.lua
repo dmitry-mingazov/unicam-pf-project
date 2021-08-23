@@ -88,7 +88,10 @@ function shortest_path(start, destination, grid)
     i, point = lowest_point(open_points, f)
     
     if (point == _destination) then
-      return recreate_path(_destination, parent)
+      return {
+        path = recreate_path(_destination, parent),
+        energy = g[point]
+        }
     end
     
     table.remove(open_points, i)
@@ -154,12 +157,32 @@ function neighbour_points(point, grid)
   return res
 end
 
-result = shortest_path({1,1}, {1,5}, grid)
-
-if result then
-  for _,v in pairs(result) do
-    print(v[1] .. " " .. v[2])
+function main()
+  for _,m in pairs(male) do
+    for _,f in pairs(female) do
+      result = shortest_path(m, f, grid)
+        print("----------------------------------------")
+        print("Male: {"..m[1]..","..m[2].."} - Female: {"..f[1]..","..f[2].."}")
+      if result then
+        print("E: "..result["energy"])
+      else
+        print("No path found")
+      end
+    end
   end
-else
-  print("No Solution")
 end
+
+main()
+
+--result = shortest_path({1,1}, {3,3}, grid)
+
+
+
+--if result then
+  --print("Energy spent: " .. result["energy"])
+  --for _,v in pairs(result["path"]) do
+    --print(v[1] .. " " .. v[2])
+ -- end
+--else
+--  print("No Solution")
+--en
