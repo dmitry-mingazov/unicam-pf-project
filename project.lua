@@ -5,8 +5,6 @@ grid = {
   {1 , 1 , 8 , 0 , 10}
 }
 
-meta_grid = {}
-
 male = {
   {1, 2},
   {3, 1}
@@ -18,27 +16,15 @@ female = {
   {2, 5}
 }
 
-function set_default (t, d)
-  local mt = {__index = function () return d end}
-  setmetatable(t, mt)
+function set_default (t, d) 
+  setmetatable(t, {__index = function () return d end})
 end
 
-function init_meta_grid()
-  for i, row in ipairs(grid) do
-    table.insert(meta_grid, {})
-    for k, _ in ipairs(row) do
-      table.insert(meta_grid[i], {i, k})
-    end
-  end
+eq_meta = {__eq = function (x,y) return x[1] == y[1] and x[2] == y[2] end}
+
+function point_equality(point)
+  return setmetatable(point, eq_meta)
 end
-
-function to_meta(point)
-  return meta_grid[point[1]][point[2]]
-end
-
-
-init_meta_grid()
-  
 
 function print_grid(grid, male, female) 
   for _,row in ipairs(grid) do
@@ -75,8 +61,8 @@ function heuristics(point, destination, grid)
 end
 
 function shortest_path(start, destination, grid) 
-  _start = to_meta(start)
-  _destination = to_meta(destination)
+  _start = point_equality(start)
+  _destination = point_equality(destination)
   closed_points = { }
   open_points = { _start }
   g = { [_start] = 0 }
@@ -98,7 +84,7 @@ function shortest_path(start, destination, grid)
     table.insert(closed_points, point)
     
     for _,neighbour in ipairs(neighbour_points(point, grid)) do
-      _neighbour = to_meta(neighbour)
+      _neighbour = point_equality(neighbour)
       if (not contains_point(closed_points, _neighbour)) then 
         
         t_g = g[point] + distance_between(point, _neighbour, grid)
@@ -133,7 +119,7 @@ end
 
 function contains_point(array, el) 
   for _,v in ipairs(array) do
-    if v[1] == el[1] and v[2] == el[2] then return true end
+    if v == el then return true end
   end
   return false
 end
@@ -171,7 +157,7 @@ function main()
     end
   end
 end
-
+ 
 main()
 
 --result = shortest_path({1,1}, {3,3}, grid)
