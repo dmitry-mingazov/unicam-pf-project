@@ -157,8 +157,37 @@ function main()
     end
   end
 end
- 
+
+_test_points = {
+  {{{1,2}, {4,2}}, {{3,1},{4,3}}},
+  {{{1,2}, {4,3}}, {{3,1},{4,2}}},
+  {{{1,2}, {2,5}}, {{3,1},{4,2}}},
+  {{{1,2}, {4,2}}, {{3,1},{2,5}}},
+}
+
+function cheaper_comb(combs)
+  min_energy = 1/0
+  for i,comb in ipairs(combs) do
+    energy = 0
+    for _,pair in pairs(comb) do
+      sp = shortest_path(pair[1], pair[2], grid)
+      if sp then
+       energy = energy + sp["energy"]
+      else
+        energy = 1/0
+      end
+    end
+    print("Path n. ".. i .. ": "..energy)
+    if energy < min_energy then
+      min_energy = energy
+    end
+  end
+  return min_energy
+end
+
 main()
+print(cheaper_comb(_test_points))
+
 
 --result = shortest_path({1,1}, {3,3}, grid)
 
