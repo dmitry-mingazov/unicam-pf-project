@@ -1,21 +1,3 @@
-grid = {
-  {1 , 2 , 0 , 4 , 5},
-  {6 , 7 , 8 , 0 , 10},
-  {11, 17, 8 , 0 , 0},
-  {1 , 1 , 8 , 0 , 10}
-}
-
-male = {
-  {1, 2},
-  {3, 1}
-} 
-
-female = {
-  {4, 2},
-  {4, 3},
-  {2, 5}
-}
-
 function set_default (t, d) 
   setmetatable(t, {__index = function () return d end})
 end
@@ -24,22 +6,6 @@ eq_meta = {__eq = function (x,y) return x[1] == y[1] and x[2] == y[2] end}
 
 function point_equality(point)
   return setmetatable(point, eq_meta)
-end
-
-function print_grid(grid, male, female) 
-  for _,row in ipairs(grid) do
-    for _,col in ipairs(row) do
-      io.write(col .. "\t")
-    end
-    print()
-  end
-end
-
-function debug_table(table) 
-  for k,v in pairs(table) do
-      io.write(k .. ":" .. v)
-      print()
-  end
 end
 
 function lowest_point(open_points, point_map)
@@ -143,29 +109,28 @@ function neighbour_points(point, grid)
   return res
 end
 
-function main()
-  for _,m in pairs(male) do
-    for _,f in pairs(female) do
-      result = shortest_path(m, f, grid)
-        print("----------------------------------------")
-        print("Male: {"..m[1]..","..m[2].."} - Female: {"..f[1]..","..f[2].."}")
-      if result then
-        print("E: "..result["energy"])
-      else
-        print("No path found")
-      end
+function comb(first_set, second_set, seq, result)
+  if #first_set == 0 then
+    final_seq = {}
+    for _,k in ipairs(seq) do
+      table.insert(final_seq, {k[1], k[2]})
     end
+    table.insert(result, final_seq)
+  else
+    local seq_male = first_set[1]
+    table.remove(first_set, 1)
+    for i,f in ipairs(second_set) do
+      table.insert(seq, {seq_male, f})
+      table.remove(second_set, i)
+      comb(first_set, second_set, seq, result)
+      table.remove(seq, #seq)
+      table.insert(second_set, i, f)
+    end
+    table.insert(first_set, 1, seq_male)
   end
 end
 
-_test_points = {
-  {{{1,2}, {4,2}}, {{3,1},{4,3}}},
-  {{{1,2}, {4,3}}, {{3,1},{4,2}}},
-  {{{1,2}, {2,5}}, {{3,1},{4,2}}},
-  {{{1,2}, {4,2}}, {{3,1},{2,5}}},
-}
-
-function cheaper_comb(combs)
+function cheapest_comb(combs)
   min_energy = 1/0
   for i,comb in ipairs(combs) do
     energy = 0
@@ -177,7 +142,6 @@ function cheaper_comb(combs)
         energy = 1/0
       end
     end
-    print("Path n. ".. i .. ": "..energy)
     if energy < min_energy then
       min_energy = energy
     end
@@ -185,19 +149,50 @@ function cheaper_comb(combs)
   return min_energy
 end
 
+function check_valid_points(points, grid)
+  height = #grid
+  width = #grid[1]
+  for _,p in ipairs(points) do
+    if (p[1] < 1 or p[1] > height) or (p[2] < 1 or p[2] > width) or grid[p[1]][p[2]] == 0 then return false end
+  end
+  return true
+end
+
+function main()
+  width = #grid[1]
+  
+  for _,row in ipairs(grid) do
+    if #row ~= width then return end -- error not rectangular
+    for _,el in ipairs(row) do
+      if el < 0 then return end -- error not positive in grid
+    end
+  end
+  
+  if not check_valid_points(male, grid) or not check_valid_points(female, grid) then return end -- invalid ant point
+  
+  result = {} 
+  first_set = #male <= #female and male or female
+  second_set = #male <= #female and female or male
+  comb(first_set, second_set, {}, result)
+  print(cheapest_comb(result))
+end
+
+grid = {
+  {1 , 2 , 0 , 4 , 5},
+  {6 , 7 , 8 , 0 , 10},
+  {11, 17, 8 , 0 , 0},
+  {1 , 1 , 8 , 0 , 10}
+}
+
+male = {
+  {1, 2},
+  {3, 1}
+} 
+
+female = {
+  {4, 2},
+  {4, 3},
+  {2, 5}
+}
+
 main()
-print(cheaper_comb(_test_points))
-
-
---result = shortest_path({1,1}, {3,3}, grid)
-
-
-
---if result then
-  --print("Energy spent: " .. result["energy"])
-  --for _,v in pairs(result["path"]) do
-    --print(v[1] .. " " .. v[2])
- -- end
---else
---  print("No Solution")
---en
