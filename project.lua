@@ -8,13 +8,15 @@ function point_equality(point)
   return setmetatable(point, eq_meta)
 end
 
+-- returns the point with smallest heuristic value
+-- and its index
 function lowest_point(open_points, point_map)
   curr_min = 1/0
   minimum_point = nil
   index = 0
   for i, curr_point in ipairs(open_points) do
-    if (f[curr_point] < curr_min) then
-      curr_min = f[curr_point]
+    if (point_map[curr_point] < curr_min) then
+      curr_min = point_map[curr_point]
       minimum_point = curr_point
       index = i
     end
@@ -22,22 +24,25 @@ function lowest_point(open_points, point_map)
   return index, minimum_point
 end
 
+-- calculate the heuristic distance between two points
 function heuristics(point, destination, grid)
   return math.abs(grid[point[1]][point[2]] - grid[destination[1]][destination[2]])
 end
 
+-- given two nodes and the grid, returns the minimum energy
+-- spent to go from `start` to `destination`
 function shortest_path(start, destination, grid) 
   local _start = point_equality(start)
   local _destination = point_equality(destination)
   local closed_points = { }
   local open_points = { _start }
-  g = { [_start] = 0 }
+  local g = { [_start] = 0 }
   set_default(g, 1/0)
-  f = { [_start] = heuristics(_start, _destination, grid) }
-  parent = {}
+  local f = { [_start] = heuristics(_start, _destination, grid) }
+  local parent = {}
   
   while (#open_points > 0) do
-    i, point = lowest_point(open_points, f)
+    local i, point = lowest_point(open_points, f)
     
     if (point == _destination) then
       return 
@@ -51,9 +56,10 @@ function shortest_path(start, destination, grid)
     
     for _,neighbour in ipairs(neighbour_points(point, grid)) do
       _neighbour = point_equality(neighbour)
+      -- check if the current neighbour was already visited
       if (not contains_point(closed_points, _neighbour)) then 
         
-        t_g = g[point] + distance_between(point, _neighbour, grid)
+        local t_g = g[point] + distance_between(point, _neighbour, grid)
         
         if (t_g < g[_neighbour]) then
           g[_neighbour] = t_g
@@ -69,6 +75,8 @@ function shortest_path(start, destination, grid)
   return nil
 end
 
+-- returns a vector representing the shortest path
+-- to reach `destination`
 function recreate_path(destination, parent)
   current = destination
   final = {}
@@ -79,6 +87,7 @@ function recreate_path(destination, parent)
   return final
 end
 
+-- calculate the distance between two close points of the grid
 function distance_between(point, neighbour, grid)
   return math.abs(grid[point[1]][point[2]] - grid[neighbour[1]][neighbour[2]])
 end
@@ -110,13 +119,15 @@ function neighbour_points(point, grid)
   return res
 end
 
+-- wraps the function comb
 function fcomb(first_set, second_set)
   res = {}
   comb(first_set, second_set, {}, res)
   return res
 end
 
--- given two sets, 
+-- given two sets of flies, calculate all possible combinations
+-- between them
 function comb(first_set, second_set, seq, result)
   if #first_set == 0 then
     final_seq = {}
@@ -138,6 +149,8 @@ function comb(first_set, second_set, seq, result)
   end
 end
 
+-- returns the energy spent by the cheapest combination
+-- of paths
 function cheapest_comb(combs)
   min_energy = 1/0
   for i,comb in ipairs(combs) do
