@@ -9,17 +9,17 @@ function point_equality(point)
 end
 
 function lowest_point(open_points, point_map)
-  min = 1/0
-  to_return = nil
+  curr_min = 1/0
+  minimum_point = nil
   index = 0
-  for i,point in ipairs(open_points) do
-    if (f[point] < min) then
-      min = f[point]
-      to_return = point
+  for i, curr_point in ipairs(open_points) do
+    if (f[curr_point] < curr_min) then
+      curr_min = f[curr_point]
+      minimum_point = curr_point
       index = i
     end
   end
-  return index, to_return
+  return index, minimum_point
 end
 
 function heuristics(point, destination, grid)
@@ -27,10 +27,10 @@ function heuristics(point, destination, grid)
 end
 
 function shortest_path(start, destination, grid) 
-  _start = point_equality(start)
-  _destination = point_equality(destination)
-  closed_points = { }
-  open_points = { _start }
+  local _start = point_equality(start)
+  local _destination = point_equality(destination)
+  local closed_points = { }
+  local open_points = { _start }
   g = { [_start] = 0 }
   set_default(g, 1/0)
   f = { [_start] = heuristics(_start, _destination, grid) }
@@ -40,10 +40,10 @@ function shortest_path(start, destination, grid)
     i, point = lowest_point(open_points, f)
     
     if (point == _destination) then
-      return {
-        path = recreate_path(_destination, parent),
-        energy = g[point]
-        }
+      return 
+        -- uncomment below to check return the path
+        -- recreate_path(_destination, parent),
+        g[point]
     end
     
     table.remove(open_points, i)
@@ -90,14 +90,15 @@ function contains_point(array, el)
   return false
 end
 
+-- returns the coordinates of `point` neighbours, if any exists
 function neighbour_points(point, grid)
-  res = {}
-  offsets = {{0,-1}, {1,0}, {0,1}, {-1,0}}
+  local res = {}
+  local offsets = {{0,-1}, {1,0}, {0,1}, {-1,0}}
   local x = point[1]
   local y = point[2]
   for _, offset in ipairs(offsets) do
-    new_x = x + offset[1]
-    new_y = y + offset[2]
+    local new_x = x + offset[1]
+    local new_y = y + offset[2]
     if new_x > 0 and new_x <= #grid then
       if new_y > 0 and new_y <= #grid[1] then
         if grid[new_x][new_y] ~= 0 then
@@ -109,6 +110,13 @@ function neighbour_points(point, grid)
   return res
 end
 
+function fcomb(first_set, second_set)
+  res = {}
+  comb(first_set, second_set, {}, res)
+  return res
+end
+
+-- given two sets, 
 function comb(first_set, second_set, seq, result)
   if #first_set == 0 then
     final_seq = {}
@@ -135,9 +143,9 @@ function cheapest_comb(combs)
   for i,comb in ipairs(combs) do
     energy = 0
     for _,pair in pairs(comb) do
-      sp = shortest_path(pair[1], pair[2], grid)
-      if sp then
-       energy = energy + sp["energy"]
+      e = shortest_path(pair[1], pair[2], grid)
+      if e then
+        energy = energy + e
       else
         energy = 1/0
       end
@@ -149,6 +157,8 @@ function cheapest_comb(combs)
   return min_energy
 end
 
+-- returns true if `points` is full of coordinates which 
+-- result valid for a fly position (in `grid`)
 function check_valid_points(points, grid)
   height = #grid
   width = #grid[1]
@@ -158,41 +168,49 @@ function check_valid_points(points, grid)
   return true
 end
 
-function main()
+-- check if `grid` is valid
+function is_grid_valid(grid)
   width = #grid[1]
-  
   for _,row in ipairs(grid) do
-    if #row ~= width then return end -- error not rectangular
+    if #row ~= width then return false end -- error not rectangular
     for _,el in ipairs(row) do
-      if el < 0 then return end -- error not positive in grid
+      if el < 0 then return false end -- error not positive in grid
     end
   end
-  
-  if not check_valid_points(male, grid) or not check_valid_points(female, grid) then return end -- invalid ant point
-  
-  result = {} 
-  first_set = #male <= #female and male or female
-  second_set = #male <= #female and female or male
-  comb(first_set, second_set, {}, result)
+  if not check_valid_points(male, grid) or not check_valid_points(female, grid) then return false end -- invalid ant point
+
+  return true
+end
+
+-- return the input sets ordered by number of elements
+-- (male, female if male is smaller; female, male otherwise)
+function order_sets(male, female)
+  return #male <= #female and male, female or female, male
+end
+
+-- main program
+do
+  grid = {
+    {1 , 2 , 0 , 4 , 5},
+    {6 , 7 , 8 , 0 , 10},
+    {11, 17, 8 , 0 , 0},
+    {1 , 1 , 8 , 0 , 10}
+  }
+
+  male = {
+    {1, 2},
+    {3, 1}
+  } 
+
+  female = {
+    {4, 2},
+    {4, 3},
+    {2, 5}
+  }
+
+  if not(is_grid_valid(grid)) then return end
+  first_set, second_set = order_sets(male, female)
+  result = fcomb(first_set, second_set)
   print(cheapest_comb(result))
 end
 
-grid = {
-  {1 , 2 , 0 , 4 , 5},
-  {6 , 7 , 8 , 0 , 10},
-  {11, 17, 8 , 0 , 0},
-  {1 , 1 , 8 , 0 , 10}
-}
-
-male = {
-  {1, 2},
-  {3, 1}
-} 
-
-female = {
-  {4, 2},
-  {4, 3},
-  {2, 5}
-}
-
-main()
